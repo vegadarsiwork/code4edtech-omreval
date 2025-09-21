@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  omr-backend:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./omr_eval/data:/app/omr_eval/data
+      - ./temp_results:/app/temp_results
+      - ./results:/app/results
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=flask_backend.py
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  omr-frontend:
+    build: .
+    command: ["streamlit", "run", "streamlit_frontend.py", "--server.port", "8502", "--server.address", "0.0.0.0"]
+    ports:
+      - "8502:8502"
+    depends_on:
+      - omr-backend
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_ENABLE_CORS=false
+    volumes:
+      - ./omr_eval/data:/app/omr_eval/data
+
+volumes:
+  omr_data:
+  omr_results:
